@@ -10,14 +10,14 @@ import UIKit
 
 struct ContactBrain {
     var contacts = [
-        Contact(name: "Yedige", color: .blue),
-        Contact(name: "Aman", color: .yellow),
-        Contact(name: "Sanya", color: .gray),
-        Contact(name: "Yersin", color: .green),
-        Contact(name: "Asset", color: .purple),
-        Contact(name: "Alisher", color: .orange),
-        Contact(name: "Amirzhan", color: .brown),
-    ] 
+        Contact(name: "Yedige", color: .blue, phoneNumber: 87781234586),
+        Contact(name: "Aman", color: .yellow, phoneNumber: 87753456789),
+        Contact(name: "Sanya", color: .gray, phoneNumber: 87714323245),
+        Contact(name: "Yersin", color: .green, phoneNumber: 87071231286),
+        Contact(name: "Asset", color: .purple, phoneNumber: 87051444586),
+        Contact(name: "Alisher", color: .orange, phoneNumber: 87011454586),
+        Contact(name: "Amirzhan", color: .brown, phoneNumber: 87021974586),
+    ]
     
     let colors = [
         UIColor.red,

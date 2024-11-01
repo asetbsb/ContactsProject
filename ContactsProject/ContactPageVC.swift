@@ -9,9 +9,11 @@ import UIKit
 
 final class ContactPageVC: UIViewController {
     
-    private let contactBrain = ContactBrain()
+    private var contactBrain = ContactBrain()
     weak var delegate: ChangeAvatarColorDelegate?
     var index = 0
+    var contact: Contact = Contact(name: "Default", color: .cyan, phoneNumber: 777)
+    var isNewContact = true
     
     //MARK: - UI elements
         
@@ -78,14 +80,36 @@ final class ContactPageVC: UIViewController {
         return label
     }()
     
-    private lazy var contactName: UILabel = {
-        let label = UILabel()
-        label.font = .systemFont(ofSize: 30, weight: .semibold)
-        label.textAlignment = .center
-        label.numberOfLines = 0
+    private lazy var contactNameField: UITextField = {
+        let field = UITextField()
+        field.textAlignment = .center
+        field.font = .systemFont(ofSize: 30, weight: .semibold)
+        field.borderStyle = .roundedRect
+        field.layer.cornerRadius = 12
+        field.keyboardType = .default
+        field.contentMode = .scaleToFill
+        field.backgroundColor = .clear
+        field.clearButtonMode = .whileEditing
+        field.delegate = self
         
-        label.translatesAutoresizingMaskIntoConstraints = false
-        return label
+        field.translatesAutoresizingMaskIntoConstraints = false
+        return field
+    }()
+    
+    private lazy var phoneNumberField: UITextField = {
+        let field = UITextField()
+        field.textAlignment = .center
+        field.font = .systemFont(ofSize: 30, weight: .semibold)
+        field.borderStyle = .roundedRect
+        field.layer.cornerRadius = 12
+        field.keyboardType = .numberPad
+        field.contentMode = .scaleToFill
+        field.backgroundColor = .clear
+        field.clearButtonMode = .whileEditing
+        field.delegate = self
+        
+        field.translatesAutoresizingMaskIntoConstraints = false
+        return field
     }()
     
     private func createButton() -> UIButton {
@@ -111,8 +135,43 @@ final class ContactPageVC: UIViewController {
         setupUI()
     }
     
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        
+        if self.isBeingDismissed || self.isMovingFromParent {
+            
+            var phoneNumber = Int(phoneNumberField.text ?? "")
+            if phoneNumberField.text == ""{
+                phoneNumber = Int(phoneNumberField.placeholder ?? "")
+            }
+            
+            var contactName = contactNameField.text ?? "Failed to change name"
+            if contactNameField.text == "" {
+                contactName = contactNameField.placeholder ?? "failed to paste placeholder"
+            }
+            
+            if isNewContact {
+                delegate?.addNewContact(
+                    name: contactName,
+                    color: contactAvatar.backgroundColor ?? .black,
+                    number: phoneNumber
+                )
+            } else {
+                delegate?.viewDismissed(
+                    index: index,
+                    name: contactName,
+                    number: phoneNumber
+                )
+            }
+        }
+    }
+
+    
+    //MARK: - Lifecycle helper functions
+    
     private func setupUI() {
         view.backgroundColor = UIColor(rgb: 0xCBD2A4)
+        self.hideKeyboardWhenTappedAround()
         addSubviews()
         setContactDesign()
         setViewConstraints()
@@ -120,9 +179,10 @@ final class ContactPageVC: UIViewController {
     }
     
     private func setContactDesign() {
-        contactName.text = contactBrain.contacts[index].name
-        contactAvatar.text = String(contactBrain.contacts[index].name.prefix(1))
-        contactAvatar.backgroundColor = contactBrain.contacts[index].color
+        contactNameField.placeholder = contact.name
+        phoneNumberField.placeholder = String(contact.phoneNumber)
+        contactAvatar.text = String(contact.name.prefix(1))
+        contactAvatar.backgroundColor = contact.color
     }
     
     private func addSubviews() {
@@ -131,7 +191,8 @@ final class ContactPageVC: UIViewController {
         view.addSubview(buttonsView)
         
         avatarView.addSubview(contactAvatar)
-        titleView.addSubview(contactName)
+        titleView.addSubview(contactNameField)
+        titleView.addSubview(phoneNumberField)
         
         buttonsView.addSubview(stackView)
         for _ in 1...4 {
@@ -185,14 +246,40 @@ final class ContactPageVC: UIViewController {
             contactAvatar.heightAnchor.constraint(equalToConstant: 140),
             contactAvatar.widthAnchor.constraint(equalToConstant: 140),
             
-            contactName.centerYAnchor.constraint(equalTo: titleView.centerYAnchor),
-            contactName.centerXAnchor.constraint(equalTo: titleView.centerXAnchor),
+            contactNameField.topAnchor.constraint(equalTo: titleView.topAnchor, constant: 20),
+            contactNameField.centerXAnchor.constraint(equalTo: titleView.centerXAnchor),
+            
+            phoneNumberField.topAnchor.constraint(equalTo: contactNameField.bottomAnchor, constant: 8),
+            phoneNumberField.centerXAnchor.constraint(equalTo: titleView.centerXAnchor),
         ])
     }
     
     @objc private func changeColor(_ sender: UIButton) {
         contactAvatar.backgroundColor = sender.backgroundColor
-        delegate?.changeButtonTapped(index: index, color: sender.backgroundColor ?? .black)
+        delegate?.changeButtonTapped(
+            index: index,
+            color: sender.backgroundColor ?? .black
+        )
     }
 
+}
+
+//MARK: -Extensions
+
+extension ContactPageVC: UITextFieldDelegate {
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        textField.resignFirstResponder()
+        contactAvatar.text = contactNameField.text?.prefix(1).uppercased() ?? ""
+        return true
+    }
+    
+    func hideKeyboardWhenTappedAround() {
+        let tap = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
+        tap.cancelsTouchesInView = false
+        view.addGestureRecognizer(tap)
+    }
+    
+    @objc func dismissKeyboard() {
+        view.endEditing(true)
+    }
 }

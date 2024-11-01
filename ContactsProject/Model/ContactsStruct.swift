@@ -9,6 +9,7 @@ import UIKit
 import Foundation
 
 struct Contact {
-    let name: String
+    var name: String
     var color: UIColor
+    var phoneNumber: Int
 }
